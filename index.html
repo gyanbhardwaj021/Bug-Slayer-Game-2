@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BUG SLAYER: CYBER CODE - Gen Z Typing RPG</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&family=Orbitron:wght@500;700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #030008;
+            --main-green: #00ff66;
+            --main-pink: #ff0055;
+            --main-cyan: #00f0ff;
+            --main-yellow: #ffe600;
+            --main-purple: #b000ff;
+            --text-gray: #4a5568;
+            --card-bg: rgba(12, 10, 24, 0.85);
+            --border-glow: 0 0 15px rgba(0, 240, 255, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: #fff;
+            font-family: 'Fira Code', monospace;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 20%, rgba(176, 0, 255, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 85% 80%, rgba(0, 240, 255, 0.15) 0%, transparent 40%);
+        }
+
+        /* Scanline Overlay */
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 99;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        /* Screen Container */
+        .app-container {
+            width: 95%;
+            max-width: 1000px;
+            background: var(--card-bg);
+            border: 2px solid var(--main-cyan);
+            box-shadow: var(--border-glow), inset 0 0 20px rgba(0, 240, 255, 0.1);
+            border-radius: 12px;
+            padding: 24px;
+            position: relative;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Glitch Effect on Start */
+        .glitch-start {
+            animation: glitch-anim 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+        }
+
+        @keyframes glitch-anim {
+            0% { transform: translate(0); }
+            20% { transform: translate(-5px, 5px) skewX(2deg); filter: hue-rotate(90deg); }
+            40% { transform: translate(-5px, -5px) skewX(-2deg); filter: hue-rotate(180deg); }
+            60% { transform: translate(5px, 5px); filter: hue-rotate(270deg); }
+            80% { transform: translate(5px, -5px); }
+            100% { transform: translate(0); filter: hue-rotate(0deg); }
+        }
+
+        /* Header / HUD */
+        .hud-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .hud-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .hud-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.75rem;
+            color: var(--main-cyan);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .hud-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: #fff;
+        }
+
+        /* Navigation / Language Tabs */
+        .tab-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 12px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: 1px solid var(--text-gray);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover, .tab-btn.active {
+            border-color: var(--main-green);
+            background: rgba(0, 255, 102, 0.15);
+            color: var(--main-green);
+            box-shadow: 0 0 10px rgba(0, 255, 102, 0.3);
+        }
+
+        .tab-btn.boss-tab {
+            border-color: var(--main-pink);
+            color: var(--main-pink);
+            margin-left: auto;
+        }
+
+        .tab-btn.boss-tab:hover, .tab-btn.boss-tab.active {
+            background: rgba(255, 0, 85, 0.2);
+            box-shadow: 0 0 12px rgba(255, 0, 85, 0.4);
+        }
+
+        /* Arena Battle Screen */
+        .battle-arena {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+            position: relative;
+            min-height: 140px;
+        }
+
+        .hero-avatar, .bug-avatar {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .avatar-icon {
+            font-size: 2.8rem;
+            filter: drop-shadow(0 0 10px var(--main-cyan));
+        }
+
+        .bug-avatar .avatar-icon {
+            filter: drop-shadow(0 0 10px var(--main-pink));
+            animation: float-bug 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes float-bug {
+            0% { transform: translateY(0px) scale(1); }
+            100% { transform: translateY(-8px) scale(1.05); }
+        }
+
+        .hp-bar-container {
+            width: 120px;
+            height: 10px;
+            background: #222;
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid #444;
+        }
+
+        .hp-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--main-pink), var(--main-yellow));
+            width: 100%;
+            transition: width 0.3s ease;
+        }
+
+        /* Code Typing Display Area */
+        .typing-box {
+            background: #080612;
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            font-size: 1.25rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-bottom: 20px;
+            position: relative;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
+            min-height: 120px;
+        }
+
+        .char-correct {
+            color: var(--main-green);
+            text-shadow: 0 0 8px rgba(0, 255, 102, 0.6);
+        }
+
+        .char-wrong {
+            color: #fff;
+            background-color: var(--main-pink);
+            border-radius: 2px;
+            animation: shake 0.15s ease-in-out;
+        }
+
+        .char-current {
+            border-bottom: 3px solid var(--main-cyan);
+            animation: pulse-cursor 0.8s infinite;
+            background: rgba(0, 240, 255, 0.15);
+        }
+
+        @keyframes pulse-cursor {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Hidden Input capture */
+        #hidden-input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Level Selector Map Grid */
+        .level-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .level-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .level-card:hover {
+            border-color: var(--main-cyan);
+            transform: translateY(-2px);
+            background: rgba(0, 240, 255, 0.08);
+        }
+
+        .level-card.completed {
+            border-color: var(--main-green);
+            background: rgba(0, 255, 102, 0.05);
+        }
+
+        .level-card.locked {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* Dashboard & Summary Overlay */
+        .results-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 3, 15, 0.95);
+            border-radius: 12px;
+            padding: 30px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .results-overlay.active {
+            display: flex;
+        }
+
+        .rank-badge {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 3rem;
+            color: var(--main-yellow);
+            text-shadow: 0 0 20px rgba(255, 230, 0, 0.6);
+            margin: 15px 0;
+        }
+
+        .btn-action {
+            background: linear-gradient(135deg, var(--main-cyan), var(--main-purple));
+            border: none;
+            color: #fff;
+            padding: 12px 28px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: 20px;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+            transition: transform 0.2s;
+        }
+
+        .btn-action:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="scanlines"></div>
+
+    <div class="app-container" id="game-app">
+        <!-- HUD Header -->
+        <div class="hud-bar">
+            <div class="hud-card">
+                <div class="hud-title">DRIP/MIN (WPM)</div>
+                <div class="hud-value" id="hud-wpm">0</div>
+            </div>
+            <div class="hud-card">
+                <div class="hud-title">AURA (ACCURACY)</div>
+                <div class="hud-value" id="hud-accuracy">100%</div>
+            </div>
+            <div class="hud-card">
+                <div class="hud-title">W-STREAK</div>
+                <div class="hud-value" id="hud-streak">0x</div>
+            </div>
+            <div class="hud-card">
+                <div class="hud-title">BAG 💰</div>
+                <div class="hud-value" id="hud-score">0</div>
+            </div>
+        </div>
+
+        <!-- Language Selector & Boss Rush Tabs -->
+        <div class="tab-bar">
+            <button class="tab-btn active" onclick="switchLanguage('python')">🐍 PYTHON (20)</button>
+            <button class="tab-btn" onclick="switchLanguage('javascript')">⚡ JAVASCRIPT (20)</button>
+            <button class="tab-btn" onclick="switchLanguage('html')">🎨 HTML/CSS (20)</button>
+            <button class="tab-btn boss-tab" onclick="startBossRush()">👑 120s BOSS RUSH</button>
+        </div>
+
+        <!-- Battle Arena Display -->
+        <div class="battle-arena">
+            <div class="hero-avatar">
+                <div class="avatar-icon">🥷</div>
+                <div style="font-size: 0.8rem; color: var(--main-cyan);">CODE SLAYER</div>
+            </div>
+
+            <div style="text-align: center;">
+                <div id="stage-title" style="font-family: 'Orbitron'; font-size: 1rem; color: var(--main-yellow);">LEVEL 1</div>
+                <div id="timer-display" style="font-family: 'Orbitron'; font-size: 1.8rem; font-weight: bold; color: var(--main-pink); visibility: hidden;">120s</div>
+            </div>
+
+            <div class="bug-avatar">
+                <div class="avatar-icon" id="bug-icon">👾</div>
+                <div class="hp-bar-container">
+                    <div class="hp-bar-fill" id="bug-hp"></div>
+                </div>
+                <div id="bug-name" style="font-size: 0.75rem; color: var(--main-pink);">SYNTAX ERROR</div>
+            </div>
+        </div>
+
+        <!-- Typing Interface -->
+        <div class="typing-box" id="typing-box" onclick="focusInput()">
+            <!-- Dynamic characters will be rendered here -->
+        </div>
+        <input type="text" id="hidden-input" autocomplete="off" spellcheck="false" autofocus>
+
+        <!-- Level Map Selector Grid -->
+        <div id="level-map-container">
+            <div style="font-family: 'Orbitron'; font-size: 0.9rem; color: var(--text-gray); margin-bottom: 10px;">CAMPAIGN PROGRESS MAP</div>
+            <div class="level-grid" id="level-grid"></div>
+        </div>
+
+        <!-- Results Analytics Dashboard -->
+        <div class="results-overlay" id="results-dashboard">
+            <h2 style="font-family: 'Orbitron'; color: var(--main-cyan);">CAMPAIGN ANALYTICS</h2>
+            <div class="rank-badge" id="rank-badge">S+</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; max-width: 400px; margin: 15px 0;">
+                <div style="text-align: center;">
+                    <div style="color: var(--text-gray); font-size: 0.8rem;">FINAL WPM</div>
+                    <div style="font-size: 1.5rem; font-weight: bold;" id="res-wpm">0</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="color: var(--text-gray); font-size: 0.8rem;">AURA (ACCURACY)</div>
+                    <div style="font-size: 1.5rem; font-weight: bold;" id="res-acc">0%</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="color: var(--text-gray); font-size: 0.8rem;">MAX W-STREAK</div>
+                    <div style="font-size: 1.5rem; font-weight: bold;" id="res-streak">0</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="color: var(--text-gray); font-size: 0.8rem;">TOTAL BAG</div>
+                    <div style="font-size: 1.5rem; font-weight: bold;" id="res-score">0</div>
+                </div>
+            </div>
+            <button class="btn-action" onclick="closeDashboard()">KEEP SLAYIN' 🔥</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 20 Levels per Language Data ---
+        const GAME_DATA = {
+            python: [
+                'print("Hello World")', 'x = 10\ny = 20', 'if x > 5:\n    print("Flex")',
+                'for i in range(5):\n    print(i)', 'def slay(bug):\n    return bug.destroy()',
+                'items = ["drip", "aura", "bag"]', 'user = {"name": "Anon", "wpm": 100}',
+                'import math\nprint(math.sqrt(16))', 'try:\n    slay()\nexcept Exception as e:\n    pass',
+                'class Slayer:\n    def __init__(self):\n        self.aura = 9999',
+                'squared = [x**2 for x in range(10)]', 'with open("bugs.txt", "r") as f:\n    data = f.read()',
+                'async def fetch_data():\n    await asyncio.sleep(1)', 'lambda x, y: x if x > y else y',
+                'from dataclasses import dataclass\n@dataclass\nclass Stats:\n    wpm: int',
+                'def decorator(func):\n    def wrapper():\n        return func()\n    return wrapper',
+                'import numpy as np\narr = np.array([1, 2, 3])', 'yield from range(0, 100)',
+                'filter_drip = list(filter(lambda x: x > 50, scores))',
+                '# FINAL PYTHON LEVEL\ndef master_slayer():\n    return "NO CAP GOATED"'
+            ],
+            javascript: [
+                'console.log("No Cap");', 'const aura = 9999;', 'let streak = 0;\nstreak++;',
+                'const slay = (bug) => bug.kill();', 'if (score > 1000) {\n    win();\n}',
+                'const drip = ["nike", "supreme"];', 'const user = { name: "Hacker", wpm: 120 };',
+                'document.querySelector(".bug").remove();', 'const [top, next] = scores;',
+                'setTimeout(() => console.log("Done"), 1000);', 'fetch("/api/drip").then(res => res.json());',
+                'async function getAura() {\n    const res = await fetch("/aura");\n}',
+                'const merged = { ...item1, ...item2 };', 'const active = items.filter(x => x.active);',
+                'class Boss extends Monster {\n    constructor() { super(); }\n}',
+                'export const slayBug = (id) => ({ type: "KILL", id });',
+                'const sum = nums.reduce((acc, curr) => acc + curr, 0);',
+                'const map = new Map([["key", "value"]]);', 'const proxy = new Proxy(target, handler);',
+                '// FINAL JS LEVEL\nconst isGoated = true;\nif (isGoated) console.log("W");'
+            ],
+            html: [
+                '<h1>Cyber Code</h1>', '<div class="card">Drip</div>', '<button onclick="slay()">Kill</button>',
+                '<input type="text" placeholder="Type..." />', '<img src="bug.png" alt="Bug" />',
+                'ul > li { color: #00ff66; }', '.grid { display: grid; gap: 10px; }',
+                '<span class="badge">S+ Rank</span>', 'body { background: #000; color: #fff; }',
+                '@media (max-width: 768px) { .box { flex: 1; } }',
+                'box-shadow: 0 0 15px rgba(0, 240, 255, 0.5);',
+                'transform: translateY(-5px) scale(1.05);',
+                'background: linear-gradient(90deg, #ff0055, #00f0ff);',
+                '<section id="arena" class="active"></section>',
+                'transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);',
+                'display: flex; align-items: center; justify-content: center;',
+                'border: 2px solid var(--main-cyan);', '<script src="app.js" defer><\/script>',
+                'animation: glitch 0.5s infinite alternate;',
+                '<!-- FINAL HTML/CSS LEVEL -->\n<div class="boss-slain">VICTORY</div>'
+            ]
+        };
+
+        // --- State Management ---
+        let currentLang = 'python';
+        let currentLevel = 0;
+        let charIndex = 0;
+        let totalTyped = 0;
+        let totalErrors = 0;
+        let streak = 0;
+        let maxStreak = 0;
+        let score = 0;
+        let startTime = null;
+        let isBossRush = false;
+        let bossTimer = 120;
+        let bossInterval = null;
+
+        const hiddenInput = document.getElementById('hidden-input');
+        const typingBox = document.getElementById('typing-box');
+
+        // --- Sound Engine (Web Audio API) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(freq, duration, type = 'sine') {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        // Initialize App
+        function init() {
+            renderMap();
+            loadStage();
+            document.addEventListener('keydown', () => hiddenInput.focus());
+            hiddenInput.addEventListener('input', handleTyping);
+            triggerGlitch();
+        }
+
+        function triggerGlitch() {
+            const app = document.getElementById('game-app');
+            app.classList.add('glitch-start');
+            setTimeout(() => app.classList.remove('glitch-start'), 400);
+        }
+
+        function switchLanguage(lang) {
+            currentLang = lang;
+            currentLevel = 0;
+            isBossRush = false;
+            document.getElementById('timer-display').style.visibility = 'hidden';
+            if(bossInterval) clearInterval(bossInterval);
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            renderMap();
+            loadStage();
+            triggerGlitch();
+        }
+
+        function renderMap() {
+            const grid = document.getElementById('level-grid');
+            grid.innerHTML = '';
+            GAME_DATA[currentLang].forEach((_, idx) => {
+                const card = document.createElement('div');
+                card.className = `level-card ${idx === currentLevel ? 'completed' : ''}`;
+                card.innerHTML = `<div style="font-size:0.7rem;">LVL</div><div style="font-size:1.1rem; font-weight:bold;">${idx + 1}</div>`;
+                card.onclick = () => {
+                    currentLevel = idx;
+                    isBossRush = false;
+                    renderMap();
+                    loadStage();
+                };
+                grid.appendChild(card);
+            });
+        }
+
+        function loadStage() {
+            charIndex = 0;
+            const targetText = isBossRush 
+                ? GAME_DATA[currentLang][Math.floor(Math.random() * GAME_DATA[currentLang].length)]
+                : GAME_DATA[currentLang][currentLevel];
+
+            document.getElementById('stage-title').innerText = isBossRush ? `BOSS RUSH WAVE` : `${currentLang.toUpperCase()} - LEVEL ${currentLevel + 1}`;
+            document.getElementById('bug-hp').style.width = '100%';
+            
+            // Render Target Characters
+            typingBox.innerHTML = '';
+            [...targetText].forEach((char, idx) => {
+                const span = document.createElement('span');
+                span.innerText = char;
+                if (idx === 0) span.className = 'char-current';
+                typingBox.appendChild(span);
+            });
+
+            hiddenInput.value = '';
+            focusInput();
+        }
+
+        function focusInput() {
+            hiddenInput.focus();
+        }
+
+        function handleTyping(e) {
+            if (!startTime) startTime = Date.now();
+            
+            const targetSpans = typingBox.querySelectorAll('span');
+            const targetText = Array.from(targetSpans).map(s => s.innerText).join('');
+            const typedVal = hiddenInput.value;
+            const currentChar = typedVal[typedVal.length - 1];
+
+            if (!currentChar) return;
+
+            totalTyped++;
+
+            if (currentChar === targetText[charIndex]) {
+                // Correct Key
+                playSound(600, 0.05, 'triangle');
+                targetSpans[charIndex].className = 'char-correct';
+                charIndex++;
+                streak++;
+                if (streak > maxStreak) maxStreak = streak;
+                score += 10 * (1 + Math.floor(streak / 10));
+
+                // Update Bug HP
+                const hpPercent = Math.max(0, 100 - (charIndex / targetText.length) * 100);
+                document.getElementById('bug-hp').style.width = `${hpPercent}%`;
+
+                if (charIndex < targetText.length) {
+                    targetSpans[charIndex].className = 'char-current';
+                } else {
+                    // Level Complete
+                    playSound(800, 0.15, 'sine');
+                    if (isBossRush) {
+                        loadStage();
+                    } else if (currentLevel < GAME_DATA[currentLang].length - 1) {
+                        currentLevel++;
+                        renderMap();
+                        loadStage();
+                    } else {
+                        showResultsDashboard();
+                    }
+                }
+            } else {
+                // Wrong Key
+                playSound(150, 0.1, 'sawtooth');
+                totalErrors++;
+                streak = 0;
+                targetSpans[charIndex].classList.add('char-wrong');
+                setTimeout(() => targetSpans[charIndex].classList.remove('char-wrong'), 200);
+            }
+
+            hiddenInput.value = '';
+            updateHUD();
+        }
+
+        function updateHUD() {
+            const timeElapsed = Math.max(0.1, (Date.now() - startTime) / 60000);
+            const wpm = Math.round((totalTyped / 5) / timeElapsed);
+            const accuracy = totalTyped > 0 ? Math.round(((totalTyped - totalErrors) / totalTyped) * 100) : 100;
+
+            document.getElementById('hud-wpm').innerText = wpm;
+            document.getElementById('hud-accuracy').innerText = `${accuracy}%`;
+            document.getElementById('hud-streak').innerText = `${streak}x`;
+            document.getElementById('hud-score').innerText = score.toLocaleString();
+        }
+
+        function startBossRush() {
+            isBossRush = true;
+            bossTimer = 120;
+            document.getElementById('timer-display').style.visibility = 'visible';
+            document.getElementById('timer-display').innerText = `${bossTimer}s`;
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.boss-tab').classList.add('active');
+
+            if(bossInterval) clearInterval(bossInterval);
+            bossInterval = setInterval(() => {
+                bossTimer--;
+                document.getElementById('timer-display').innerText = `${bossTimer}s`;
+                if (bossTimer <= 0) {
+                    clearInterval(bossInterval);
+                    showResultsDashboard();
+                }
+            }, 1000);
+
+            loadStage();
+            triggerGlitch();
+        }
+
+        function showResultsDashboard() {
+            const timeElapsed = Math.max(0.1, (Date.now() - startTime) / 60000);
+            const finalWPM = Math.round((totalTyped / 5) / timeElapsed);
+            const finalAcc = totalTyped > 0 ? Math.round(((totalTyped - totalErrors) / totalTyped) * 100) : 100;
+
+            document.getElementById('res-wpm').innerText = finalWPM;
+            document.getElementById('res-acc').innerText = `${finalAcc}%`;
+            document.getElementById('res-streak').innerText = maxStreak;
+            document.getElementById('res-score').innerText = score.toLocaleString();
+
+            let rank = 'C';
+            if (finalWPM > 80 && finalAcc > 95) rank = 'S+';
+            else if (finalWPM > 60 && finalAcc > 90) rank = 'A';
+            else if (finalWPM > 40) rank = 'B';
+
+            document.getElementById('rank-badge').innerText = rank;
+            document.getElementById('results-dashboard').classList.add('active');
+        }
+
+        function closeDashboard() {
+            document.getElementById('results-dashboard').classList.remove('active');
+            switchLanguage('python');
+        }
+
+        // Run on load
+        window.onload = init;
+    </script>
+</body>
+</html>
